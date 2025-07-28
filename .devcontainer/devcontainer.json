@@ -1,0 +1,114 @@
+{
+    "name": "C++ Development Environment",
+    "dockerFile": "Dockerfile",
+    "context": "..",
+    
+    // Features to add to the dev container
+    "features": {
+        "ghcr.io/devcontainers/features/git:1": {},
+        "ghcr.io/devcontainers/features/github-cli:1": {},
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    },
+
+    // Configure tool-specific properties
+    "customizations": {
+        "vscode": {
+            // Set *default* container specific settings.json values on container create
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "cmake.configureOnOpen": true,
+                "cmake.buildDirectory": "${workspaceFolder}/build",
+                "cmake.generator": "Ninja",
+                "files.associations": {
+                    "*.hpp": "cpp",
+                    "*.tpp": "cpp"
+                },
+                "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+                "C_Cpp.default.cppStandard": "c++20",
+                "C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
+                "editor.formatOnSave": true,
+                "editor.defaultFormatter": "ms-vscode.cpptools",
+                "clang-format.executable": "/usr/bin/clang-format",
+                "clang-tidy.executable": "/usr/bin/clang-tidy"
+            },
+
+            // Add the IDs of extensions you want installed when the container is created
+            "extensions": [
+                // C++ Development
+                "ms-vscode.cpptools",
+                "ms-vscode.cpptools-extension-pack",
+                "ms-vscode.cmake-tools",
+                "twxs.cmake",
+                
+                // Code Quality
+                "llvm-vs-code-extensions.vscode-clangd",
+                "xaver.clang-format",
+                "notskm.clang-tidy",
+                
+                // Git and Version Control
+                "eamodio.gitlens",
+                "github.vscode-pull-request-github",
+                
+                // Documentation
+                "cschlosser.doxdocgen",
+                "bbenoist.doxygen",
+                
+                // Productivity
+                "ms-vscode.vscode-json",
+                "redhat.vscode-yaml",
+                "ms-python.python",
+                "ms-python.pylint",
+                
+                // Theme and UI
+                "pkief.material-icon-theme",
+                "github.github-vscode-theme",
+                
+                // Testing
+                "ms-vscode.test-adapter-converter",
+                "matepek.vscode-catch2-test-adapter",
+                
+                // Docker
+                "ms-azuretools.vscode-docker",
+                
+                // Conan
+                "conan-io.conan"
+            ]
+        }
+    },
+
+    // Use 'forwardPorts' to make a list of ports inside the container available locally
+    "forwardPorts": [8080, 3000, 8000],
+
+    // Use 'postCreateCommand' to run commands after the container is created
+    "postCreateCommand": ".devcontainer/post-create.sh",
+
+    // Use 'postStartCommand' to run commands after the container starts
+    "postStartCommand": "echo 'Container started! Happy coding! 🚀'",
+
+    // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root
+    "remoteUser": "developer",
+
+    // Set container environment variables
+    "containerEnv": {
+        "CONAN_USER_HOME": "/home/developer",
+        "CMAKE_GENERATOR": "Ninja"
+    },
+
+    // Mount the local filesystem and set up development tools
+    "mounts": [
+        "source=${localWorkspaceFolder}/.devcontainer/conan,target=/home/developer/.conan2,type=bind,consistency=cached",
+        "source=${localWorkspaceFolder}/build,target=${containerWorkspaceFolder}/build,type=bind,consistency=cached"
+    ],
+
+    // Lifecycle scripts
+    "initializeCommand": ".devcontainer/initialize.sh",
+    "onCreateCommand": ".devcontainer/on-create.sh",
+
+    // Container capabilities and security
+    "capAdd": ["SYS_PTRACE"],
+    "securityOpt": ["seccomp=unconfined"],
+
+    // Development specific settings
+    "workspaceFolder": "/workspace",
+    "shutdownAction": "stopContainer"
+}
