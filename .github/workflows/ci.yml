@@ -1,0 +1,205 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Code formatting and static analysis
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install clang-format and clang-tidy
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-format clang-tidy
+
+    - name: Check code formatting
+      run: |
+        find src tests -name '*.cpp' -o -name '*.hpp' | xargs clang-format --dry-run --Werror
+
+    - name: Install dependencies for clang-tidy
+      run: |
+        sudo apt-get install -y cmake ninja-build
+        pip install conan
+        conan profile detect --force
+
+    - name: Setup build for clang-tidy
+      run: |
+        mkdir -p build
+        cd build
+        conan install .. --output-folder=. --build=missing -s build_type=Debug
+        cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake
+
+    - name: Run clang-tidy
+      run: |
+        cd build
+        find ../src -name '*.cpp' | xargs clang-tidy -p .
+
+  # Build and test matrix
+  build-and-test:
+    name: Build and Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        build_type: [Debug, Release]
+        compiler:
+          - { name: gcc, version: 11 }
+          - { name: clang, version: 15 }
+        exclude:
+          - os: windows-latest
+            compiler: { name: gcc, version: 11 }
+          - os: macos-latest
+            compiler: { name: gcc, version: 11 }
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install Conan
+      run: |
+        pip install "conan>=2.0"
+        conan profile detect --force
+
+    - name: Setup GCC (Linux)
+      if: matrix.os == 'ubuntu-latest' && matrix.compiler.name == 'gcc'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-${{ matrix.compiler.version }} g++-${{ matrix.compiler.version }}
+        echo "CC=gcc-${{ matrix.compiler.version }}" >> $GITHUB_ENV
+        echo "CXX=g++-${{ matrix.compiler.version }}" >> $GITHUB_ENV
+
+    - name: Setup Clang (Linux)
+      if: matrix.os == 'ubuntu-latest' && matrix.compiler.name == 'clang'
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh ${{ matrix.compiler.version }}
+        echo "CC=clang-${{ matrix.compiler.version }}" >> $GITHUB_ENV
+        echo "CXX=clang++-${{ matrix.compiler.version }}" >> $GITHUB_ENV
+
+    - name: Setup Clang (macOS)
+      if: matrix.os == 'macos-latest' && matrix.compiler.name == 'clang'
+      run: |
+        echo "CC=clang" >> $GITHUB_ENV
+        echo "CXX=clang++" >> $GITHUB_ENV
+
+    - name: Cache Conan dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.conan2
+        key: ${{ runner.os }}-conan-${{ hashFiles('conanfile.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-conan-
+
+    - name: Install dependencies
+      run: |
+        conan install . --output-folder=build --build=missing -s build_type=${{ matrix.build_type }}
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake -DBUILD_TESTS=ON
+
+    - name: Build
+      run: cmake --build build --config ${{ matrix.build_type }} --parallel
+
+    - name: Test
+      working-directory: build
+      run: ctest --build-config ${{ matrix.build_type }} --output-on-failure --parallel
+
+    - name: Test with sanitizers (Linux Debug only)
+      if: matrix.os == 'ubuntu-latest' && matrix.build_type == 'Debug'
+      run: |
+        cmake -B build-sanitizers -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake -DENABLE_SANITIZERS=ON -DBUILD_TESTS=ON
+        cmake --build build-sanitizers --parallel
+        cd build-sanitizers && ctest --output-on-failure --parallel
+
+  # Coverage analysis (Linux only)
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y lcov
+        pip install "conan>=2.0"
+        conan profile detect --force
+
+    - name: Install project dependencies
+      run: |
+        conan install . --output-folder=build --build=missing -s build_type=Debug
+
+    - name: Configure with coverage
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake -DBUILD_TESTS=ON -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_C_FLAGS="--coverage"
+
+    - name: Build
+      run: cmake --build build --parallel
+
+    - name: Run tests
+      working-directory: build
+      run: ctest --output-on-failure --parallel
+
+    - name: Generate coverage report
+      run: |
+        lcov --capture --directory build --output-file coverage.info
+        lcov --remove coverage.info '/usr/*' '*/build/*' '*/tests/*' --output-file coverage.info
+        lcov --list coverage.info
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./coverage.info
+        fail_ci_if_error: true
+
+  # Memory testing with Valgrind (Linux only)
+  memory-test:
+    name: Memory Testing
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install Valgrind and dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y valgrind
+        pip install "conan>=2.0"
+        conan profile detect --force
+
+    - name: Install project dependencies
+      run: |
+        conan install . --output-folder=build --build=missing -s build_type=Debug
+
+    - name: Configure and build
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake -DBUILD_TESTS=ON
+        cmake --build build --parallel
+
+    - name: Run tests with Valgrind
+      working-directory: build
+      run: |
+        valgrind --tool=memcheck --leak-check=full --error-exitcode=1 ./bin/CppTemplate_tests

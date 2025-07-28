@@ -1,0 +1,70 @@
+# Build artifacts
+build/
+build-*/
+cmake-build-*/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Documentation build
+docs/doxygen/
+
+# Logs
+logs/
+*.log
+
+# Conan
+.conan/
+
+# Coverage
+*.gcov
+*.gcno
+*.gcda
+coverage.info
+coverage/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Package files
+*.deb
+*.rpm
+*.tar.gz
+*.zip
+
+# Backup files
+*.bak
+*.backup
+
+# CI/CD files (keep local copies)
+.github/
+
+# Docker files (except Dockerfile)
+docker-compose*.yml
+.dockerignore
+
+# Node modules (if any)
+node_modules/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Test results
+Testing/
+test_detail.xml
+gtest_*.xml
