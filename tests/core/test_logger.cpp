@@ -2,9 +2,9 @@
 #include <memory>
 #include <filesystem>
 
-#include "core/logger.hpp"
+#include "cpptemplate/core/logger.hpp"
 
-using namespace cpp_template::core;
+using namespace cpptemplate::core;
 
 class LoggerTest : public ::testing::Test {
 protected:
