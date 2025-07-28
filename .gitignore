@@ -11,12 +11,6 @@
 *.gch
 *.pch
 
-# Linker files
-*.ilk
-
-# Debugger Files
-*.pdb
-
 # Compiled Dynamic libraries
 *.so
 *.dylib
@@ -37,5 +31,93 @@
 *.out
 *.app
 
-# debug information files
-*.dwo
+# Build directories
+build/
+build-*/
+cmake-build-*/
+
+# Conan
+conanfile.pyc
+conandata.yml
+conanbuildinfo.*
+conaninfo.txt
+graph_info.json
+.conan/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Testing/
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation
+docs/doxygen/
+*.log
+
+# Coverage
+*.gcov
+*.gcno
+*.gcda
+coverage.info
+coverage/
+lcov.info
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Package managers
+node_modules/
+.npm/
+package-lock.json
+
+# Clang
+.clang_complete
+.ycm_extra_conf.py
+
+# Sanitizer outputs
+*.dSYM/
+
+# Profiling
+*.prof
+gmon.out
+
+# Backup files
+*.bak
+*.backup
+
+# System files
+Thumbs.db
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Packaging
+*.deb
+*.rpm
+*.tar.gz
+*.zip
+
+# Test results
+Testing/
+test_detail.xml
+gtest_*.xml
