@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 #include <stdexcept>
 
-#include "core/calculator.hpp"
+#include "cpptemplate/math/calculator.hpp"
 
-using namespace cpp_template::core;
+using namespace cpptemplate::math;
 
 class CalculatorTest : public ::testing::Test {
 protected:

@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include "utils/string_utils.hpp"
+#include "cpptemplate/utils/string_utils.hpp"
 
-using namespace cpp_template::utils;
+using namespace cpptemplate::utils;
 
 class StringUtilsTest : public ::testing::Test {
 protected:
