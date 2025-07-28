@@ -191,6 +191,33 @@ docker build --target docs -t cpp-template-docs .
 docker run -p 8080:80 cpp-template-docs
 ```
 
+### VS Code DevContainer
+
+For the best development experience, use the provided DevContainer:
+
+```bash
+# Prerequisites: VS Code + Dev Containers extension + Docker
+# 1. Open project in VS Code
+# 2. Press Ctrl+Shift+P
+# 3. Type "Dev Containers: Reopen in Container"
+# 4. Wait for container to build
+
+# Once inside the container:
+build          # Build the project
+test           # Run tests
+format         # Format code
+lint           # Run static analysis
+```
+
+The DevContainer provides:
+- **Complete C++ environment** with GCC 11, Clang 15, CMake, Ninja
+- **Pre-configured VS Code** with C++ extensions and settings
+- **Debugging support** for all applications
+- **Code quality tools** (clang-format, clang-tidy, pre-commit hooks)
+- **Package managers** (Conan 2.0, vcpkg)
+
+See [.devcontainer/README.md](.devcontainer/README.md) for detailed information.
+
 ### Manual Build
 
 If you prefer manual building:

@@ -44,6 +44,9 @@ conaninfo.txt
 graph_info.json
 .conan/
 
+# DevContainer cache
+.devcontainer/conan/
+
 # CMake
 CMakeCache.txt
 CMakeFiles/
