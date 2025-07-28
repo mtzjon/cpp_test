@@ -12,6 +12,14 @@ ENABLE_CLANG_TIDY="OFF"
 CLEAN_BUILD="false"
 INSTALL="false"
 JOBS=$(nproc)
+BUILD_SHARED_LIBS="OFF"
+BUILD_CORE_LIB="ON"
+BUILD_MATH_LIB="ON"
+BUILD_UTILS_LIB="ON"
+BUILD_NETWORK_LIB="ON"
+BUILD_MAIN_APP="ON"
+BUILD_CLI_APP="ON"
+BUILD_SERVER_APP="ON"
 
 # Function to show usage
 show_help() {
@@ -33,6 +41,15 @@ OPTIONS:
     --clean                Clean build directory before building
     --install              Install after building
     --verbose              Verbose output
+    --shared               Build shared libraries
+    --static               Build static libraries (default)
+    --disable-core         Disable core library
+    --disable-math         Disable math library
+    --disable-utils        Disable utils library
+    --disable-network      Disable network library
+    --disable-main         Disable main application
+    --disable-cli          Disable CLI application
+    --disable-server       Disable server application
 
 Examples:
     $0                                  # Release build with tests
@@ -93,6 +110,42 @@ while [[ $# -gt 0 ]]; do
             set -x
             shift
             ;;
+        --shared)
+            BUILD_SHARED_LIBS="ON"
+            shift
+            ;;
+        --static)
+            BUILD_SHARED_LIBS="OFF"
+            shift
+            ;;
+        --disable-core)
+            BUILD_CORE_LIB="OFF"
+            shift
+            ;;
+        --disable-math)
+            BUILD_MATH_LIB="OFF"
+            shift
+            ;;
+        --disable-utils)
+            BUILD_UTILS_LIB="OFF"
+            shift
+            ;;
+        --disable-network)
+            BUILD_NETWORK_LIB="OFF"
+            shift
+            ;;
+        --disable-main)
+            BUILD_MAIN_APP="OFF"
+            shift
+            ;;
+        --disable-cli)
+            BUILD_CLI_APP="OFF"
+            shift
+            ;;
+        --disable-server)
+            BUILD_SERVER_APP="OFF"
+            shift
+            ;;
         *)
             echo "Unknown option: $1"
             show_help
@@ -141,7 +194,15 @@ cmake -B "$BUILD_DIR" \
     -DBUILD_TESTS="$ENABLE_TESTS" \
     -DBUILD_DOCS="$ENABLE_DOCS" \
     -DENABLE_SANITIZERS="$ENABLE_SANITIZERS" \
-    -DENABLE_CLANG_TIDY="$ENABLE_CLANG_TIDY"
+    -DENABLE_CLANG_TIDY="$ENABLE_CLANG_TIDY" \
+    -DBUILD_SHARED_LIBS="$BUILD_SHARED_LIBS" \
+    -DBUILD_CORE_LIB="$BUILD_CORE_LIB" \
+    -DBUILD_MATH_LIB="$BUILD_MATH_LIB" \
+    -DBUILD_UTILS_LIB="$BUILD_UTILS_LIB" \
+    -DBUILD_NETWORK_LIB="$BUILD_NETWORK_LIB" \
+    -DBUILD_MAIN_APP="$BUILD_MAIN_APP" \
+    -DBUILD_CLI_APP="$BUILD_CLI_APP" \
+    -DBUILD_SERVER_APP="$BUILD_SERVER_APP"
 
 # Build
 echo "Building..."
@@ -165,12 +226,15 @@ echo "========================================"
 echo "Build completed successfully!"
 echo "========================================"
 
-# Show executable location
-if [[ -f "$BUILD_DIR/bin/cpp-template" ]]; then
-    echo "Executable: $BUILD_DIR/bin/cpp-template"
-elif [[ -f "$BUILD_DIR/bin/cpp-template.exe" ]]; then
-    echo "Executable: $BUILD_DIR/bin/cpp-template.exe"
-fi
+# Show executable locations
+echo "Built applications:"
+for app in cpp_template_main cpp_template_cli cpp_template_server; do
+    if [[ -f "$BUILD_DIR/bin/$app" ]]; then
+        echo "  $app: $BUILD_DIR/bin/$app"
+    elif [[ -f "$BUILD_DIR/bin/$app.exe" ]]; then
+        echo "  $app: $BUILD_DIR/bin/$app.exe"
+    fi
+done
 
 if [[ "$ENABLE_DOCS" == "ON" ]] && [[ -f "$BUILD_DIR/docs/doxygen/html/index.html" ]]; then
     echo "Documentation: $BUILD_DIR/docs/doxygen/html/index.html"
